@@ -1,3 +1,3 @@
 # CircularBuffer
 
-A CircularBuffer struct. Not thread safe.
+A circular buffer struct for numeric data types. Not thread safe.

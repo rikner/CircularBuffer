@@ -17,9 +17,34 @@ struct CircularBuffer<Numeric> {
     var isFull: Bool {
         return ((writeIndex + 1) % store.count) == readIndex
     }
-    
+
     init(repeating value: Numeric, count: Int) {
         store = Array<Numeric>(repeating: value, count: count + 1)
+    }
+
+    func hasCapacity(for count: Int) -> Bool {
+        if isFull {
+            return false
+        }
+        return remainingElementsToWrite >= count
+    }
+
+    var remainingElementsToWrite: Int {
+        if isFull { return 0 }
+        if writeIndex < readIndex {
+            return readIndex - writeIndex
+        } else {
+            return (store.count - writeIndex) + readIndex
+        }
+    }
+
+    var remainingElementsToRead: Int  {
+        if isEmpty { return store.count }
+        if readIndex < writeIndex {
+            return writeIndex - readIndex
+        } else {
+            return (store.count - readIndex) + writeIndex
+        }
     }
 
     @discardableResult
@@ -37,6 +62,20 @@ struct CircularBuffer<Numeric> {
         return true
     }
 
+    @discardableResult
+    mutating func write(_ elements: [Numeric]) -> Bool {
+        guard hasCapacity(for: elements.count) else {
+            return false
+        }
+
+        // TODO: use subscript with ranges instead forEach
+        elements.forEach {
+            write($0)
+        }
+        
+        return true
+    }
+
     mutating func read() -> Numeric? {
         if isEmpty {
             return nil
@@ -47,5 +86,24 @@ struct CircularBuffer<Numeric> {
         }
 
         return store[readIndex]
+    }
+
+    mutating func readAll() -> [Numeric] {
+        if isEmpty {
+            return []
+        }
+
+        let result: [Numeric]
+        if readIndex < writeIndex {
+            result = Array(store[readIndex ..< writeIndex])
+        } else {
+            result = Array(store[readIndex...]) + Array(store[..<writeIndex])
+        }
+
+        defer {
+            readIndex = (readIndex + result.count) % store.count
+        }
+
+        return result
     }
 }

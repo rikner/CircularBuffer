@@ -53,10 +53,19 @@ final class CircularBufferTests: XCTestCase {
         }
     }
 
+    func testArrayWrite() {
+        var buf = CircularBuffer<Float>(repeating: 0, count: 2)
+
+        buf.write([0.1, 0.2])
+
+        XCTAssert(buf.isFull)
+    }
+
     static var allTests = [
         ("testInit", testInit),
         ("testFullAndEmpty", testFullAndEmpty),
         ("testBasicWrite", testBasicWrite),
-        ("testRead", testRead)
+        ("testRead", testRead),
+        ("testArrayWrite", testArrayWrite)
     ]
 }
