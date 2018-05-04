@@ -60,10 +60,10 @@ final class CircularBufferTests: XCTestCase {
     }
 
     func testReadAll() {
-        var buf = CircularBuffer<Float>(repeating: 0, count: 3)
         let testData: [Float] = [0.1, 0.2, 0.3]
-
-        buf.write(testData)
+        var buf = CircularBuffer<Float>(from: testData, readIndex: 0, writeIndex: 0, empty: false)
+        XCTAssertTrue(buf.isFull) // since readIndex equals writeIndex and empty is false -> buffer is full
+        
         let data = buf.readAll()
         
         XCTAssertEqual(data, testData)
@@ -72,14 +72,14 @@ final class CircularBufferTests: XCTestCase {
     }
 
     func testWrappedRead() {
-        let array = [1, 0, 1]
+        let array = [1, 0, 2]
         let readIndex = 2
         let writeIndex = 1
         var buf = CircularBuffer<Int>(from: array, readIndex: readIndex, writeIndex: writeIndex)
   
         let data = buf.readAll()
 
-        XCTAssertEqual(data, [1, 1])
+        XCTAssertEqual(data, [2, 1])
         XCTAssertTrue(buf.isEmpty)
     }
 

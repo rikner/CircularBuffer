@@ -1,14 +1,15 @@
 /*
  * fixed size circular buffer
  * not thread-safe
- * uses empty flag with additional logic to check if buffer is full or empty
+ * uses an 'empty' flag with additional logic to check if buffer is full or empty
+ * does not overwrite data which has not been read yet
  */
 
 public struct CircularBuffer<Numeric> {
     private(set) var store: [Numeric]
-    private var empty: Bool
-    var readIndex: Int = 0
-    var writeIndex: Int = 0
+    private var empty: Bool // only set to true on init and when reading, only set to false when writing
+    private(set) var readIndex: Int = 0
+    private(set) var writeIndex: Int = 0
 
     var isEmpty: Bool {
         return (readIndex == writeIndex) && empty
@@ -23,7 +24,10 @@ public struct CircularBuffer<Numeric> {
         empty = true
     }
 
+    /// only used for tests to setup use-cases more faster
     init(from array: [Numeric], readIndex: Int, writeIndex: Int, empty: Bool = false) {
+        assert(readIndex < array.count, "readIndex must be smaller than array length")
+        assert(writeIndex < array.count, "writeIndex must be smaller than array length")
         self.store = array
         self.readIndex = readIndex
         self.writeIndex = writeIndex
@@ -71,20 +75,6 @@ public struct CircularBuffer<Numeric> {
         return true
     }
 
-    @discardableResult
-    public mutating func write(_ elements: [Numeric]) -> Bool {
-        guard hasCapacity(for: elements.count) else {
-            return false
-        }
-
-        // TODO: use subscript with ranges instead forEach
-        elements.forEach {
-            write($0)
-        }
-        
-        return true
-    }
-
     public mutating func read() -> Numeric? {
         if isEmpty {
             return nil
@@ -92,46 +82,57 @@ public struct CircularBuffer<Numeric> {
 
         defer {
             readIndex = (readIndex + 1) % store.count
-            if readIndex == writeIndex {  // may be empty after reading one element
+            if readIndex == writeIndex {
                 empty = true
             }
         }
 
         return store[readIndex]
     }
+}
 
+
+// MARK: Read / Write Array
+extension CircularBuffer {
+
+    /// read all remaining data from the buffer
     public mutating func readAll() -> [Numeric] {
         if isEmpty {
             return []
         }
-        
-        /*
-         * version using read()
-         */
-        var result: [Numeric] = []
-        while let data = read() {
-            result.append(data)
+
+        defer {
+            readIndex = (readIndex + remainingElementsToRead) % store.count
+            empty = true // must always be empty after reading all elements
         }
-        
-        return result
-        
-        
-        /*
-         * version using subscripts (probably faster)
-         */
 
-        // let result: [Numeric]
-        // if readIndex < writeIndex {
-        //     result = Array(store[readIndex ..< writeIndex])
-        // } else {
-        //     result = Array(store[readIndex...]) + Array(store[..<writeIndex])
-        // }
-
-        // defer {
-        //     readIndex = (readIndex + result.count) % store.count
-        //     empty = true // must always be empty after reading all elements
-        // }
-
-        // return result
+        if readIndex < writeIndex {
+            return Array(store[readIndex ..< writeIndex])
+        } else {
+            return Array(store[readIndex...]) + Array(store[..<writeIndex])
+        }
     }
+
+    /// write an array to the buffer
+    @discardableResult
+    public mutating func write(_ elements: [Numeric]) -> Bool {
+        guard hasCapacity(for: elements.count) else {
+            return false
+        }
+
+        defer {
+            writeIndex = (writeIndex + elements.count) % store.count
+            empty = false
+        }
+
+        if writeIndex < readIndex {
+            store[writeIndex ..< readIndex] = ArraySlice(elements)
+        } else {
+            store[writeIndex...] = ArraySlice(elements.prefix(store.count - writeIndex))
+            store[..<readIndex] = ArraySlice(elements.suffix(readIndex))
+        }
+
+        return true
+    }
+
 }
