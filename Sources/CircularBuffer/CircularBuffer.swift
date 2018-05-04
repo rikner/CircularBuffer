@@ -1,31 +1,33 @@
 /*
  * fixed size circular buffer
  * not thread-safe
- * uses tail-one-behind-head to check if buffer is full
+ * uses empty flag with additional logic to check if buffer is full or empty
  */
-
 
 public struct CircularBuffer<Numeric> {
     private(set) var store: [Numeric]
+    private var empty: Bool
     var readIndex: Int = 0
     var writeIndex: Int = 0
 
     var isEmpty: Bool {
-        return readIndex == writeIndex
+        return (readIndex == writeIndex) && empty
     }
 
     var isFull: Bool {
-        return ((writeIndex + 1) % store.count) == readIndex
+        return (readIndex == writeIndex) && !empty
     }
 
     public init(repeating value: Numeric, count: Int) {
-        store = Array<Numeric>(repeating: value, count: count + 1)
+        store = Array<Numeric>(repeating: value, count: count)
+        empty = true
     }
 
-    init(from array: [Numeric], readIndex: Int, writeIndex: Int) {
+    init(from array: [Numeric], readIndex: Int, writeIndex: Int, empty: Bool = false) {
         self.store = array
         self.readIndex = readIndex
         self.writeIndex = writeIndex
+        self.empty = empty
     }
 
     public func hasCapacity(for count: Int) -> Bool {
@@ -61,6 +63,7 @@ public struct CircularBuffer<Numeric> {
 
         defer {
             writeIndex = (writeIndex + 1) % store.count
+            empty = false
         }
 
         store[writeIndex] = element
@@ -89,6 +92,9 @@ public struct CircularBuffer<Numeric> {
 
         defer {
             readIndex = (readIndex + 1) % store.count
+            if readIndex == writeIndex {  // may be empty after reading one element
+                empty = true
+            }
         }
 
         return store[readIndex]
@@ -98,18 +104,34 @@ public struct CircularBuffer<Numeric> {
         if isEmpty {
             return []
         }
-
-        let result: [Numeric]
-        if readIndex < writeIndex {
-            result = Array(store[readIndex ..< writeIndex])
-        } else {
-            result = Array(store[readIndex...]) + Array(store[..<writeIndex])
+        
+        /*
+         * version using read()
+         */
+        var result: [Numeric] = []
+        while let data = read() {
+            result.append(data)
         }
-
-        defer {
-            readIndex = (readIndex + result.count) % store.count
-        }
-
+        
         return result
+        
+        
+        /*
+         * version using subscripts (probably faster)
+         */
+
+        // let result: [Numeric]
+        // if readIndex < writeIndex {
+        //     result = Array(store[readIndex ..< writeIndex])
+        // } else {
+        //     result = Array(store[readIndex...]) + Array(store[..<writeIndex])
+        // }
+
+        // defer {
+        //     readIndex = (readIndex + result.count) % store.count
+        //     empty = true // must always be empty after reading all elements
+        // }
+
+        // return result
     }
 }

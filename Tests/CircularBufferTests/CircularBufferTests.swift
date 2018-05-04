@@ -23,7 +23,7 @@ final class CircularBufferTests: XCTestCase {
 
         XCTAssertTrue(buf.isFull)
         XCTAssertFalse(buf.isEmpty)
-        XCTAssertEqual(buf.writeIndex, 2)
+        XCTAssertEqual(buf.writeIndex, 0)
     }
 
     func testBasicWrite() {
