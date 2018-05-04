@@ -22,6 +22,12 @@ struct CircularBuffer<Numeric> {
         store = Array<Numeric>(repeating: value, count: count + 1)
     }
 
+    init(from array: [Numeric], readIndex: Int, writeIndex: Int) {
+        self.store = array
+        self.readIndex = readIndex
+        self.writeIndex = writeIndex
+    }
+
     func hasCapacity(for count: Int) -> Bool {
         if isFull {
             return false
