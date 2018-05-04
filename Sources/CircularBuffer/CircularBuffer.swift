@@ -5,7 +5,7 @@
  */
 
 
-struct CircularBuffer<Numeric> {
+public struct CircularBuffer<Numeric> {
     private(set) var store: [Numeric]
     var readIndex: Int = 0
     var writeIndex: Int = 0
@@ -18,7 +18,7 @@ struct CircularBuffer<Numeric> {
         return ((writeIndex + 1) % store.count) == readIndex
     }
 
-    init(repeating value: Numeric, count: Int) {
+    public init(repeating value: Numeric, count: Int) {
         store = Array<Numeric>(repeating: value, count: count + 1)
     }
 
@@ -28,7 +28,7 @@ struct CircularBuffer<Numeric> {
         self.writeIndex = writeIndex
     }
 
-    func hasCapacity(for count: Int) -> Bool {
+    public func hasCapacity(for count: Int) -> Bool {
         if isFull {
             return false
         }
@@ -54,7 +54,7 @@ struct CircularBuffer<Numeric> {
     }
 
     @discardableResult
-    mutating func write(_ element: Numeric) -> Bool {
+    public mutating func write(_ element: Numeric) -> Bool {
         if isFull {
             return false
         }
@@ -69,7 +69,7 @@ struct CircularBuffer<Numeric> {
     }
 
     @discardableResult
-    mutating func write(_ elements: [Numeric]) -> Bool {
+    public mutating func write(_ elements: [Numeric]) -> Bool {
         guard hasCapacity(for: elements.count) else {
             return false
         }
@@ -82,7 +82,7 @@ struct CircularBuffer<Numeric> {
         return true
     }
 
-    mutating func read() -> Numeric? {
+    public mutating func read() -> Numeric? {
         if isEmpty {
             return nil
         }
@@ -94,7 +94,7 @@ struct CircularBuffer<Numeric> {
         return store[readIndex]
     }
 
-    mutating func readAll() -> [Numeric] {
+    public mutating func readAll() -> [Numeric] {
         if isEmpty {
             return []
         }
