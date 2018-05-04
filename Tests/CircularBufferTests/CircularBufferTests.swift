@@ -28,7 +28,6 @@ final class CircularBufferTests: XCTestCase {
 
     func testBasicWrite() {
         var buf = CircularBuffer<Float>(repeating: 0, count: 10)
-
         let testData: [Float] = [0.1, 0.2, 0.3, 0.4]
 
         testData.forEach {
@@ -39,12 +38,10 @@ final class CircularBufferTests: XCTestCase {
         XCTAssertEqual(buf.readIndex, 0)
     }
 
-    func testRead() {
+    func testBasicRead() {
         var buf = CircularBuffer<Float>(repeating: 0, count: 10)
-
-        [0.1, 0.2, 0.3, 0.4].forEach {
-            buf.write($0)
-        }
+        let testData: [Float] = [0.1, 0.2, 0.3, 0.4]
+        testData.forEach { buf.write($0) }
 
         if let value = buf.read() {
             XCTAssertEqual(0.1, value)
@@ -58,14 +55,60 @@ final class CircularBufferTests: XCTestCase {
 
         buf.write([0.1, 0.2])
 
-        XCTAssert(buf.isFull)
+        XCTAssertTrue(buf.isFull)
+        XCTAssertFalse(buf.isEmpty)
+    }
+
+    func testReadAll() {
+        var buf = CircularBuffer<Float>(repeating: 0, count: 3)
+        let testData: [Float] = [0.1, 0.2, 0.3]
+
+        buf.write(testData)
+        let data = buf.readAll()
+        
+        XCTAssertEqual(data, testData)
+        XCTAssertTrue(buf.isEmpty)
+        XCTAssertFalse(buf.isFull)
+    }
+
+    func testWrappedRead() {
+        let array = [1, 0, 1]
+        let readIndex = 2
+        let writeIndex = 1
+        var buf = CircularBuffer<Int>(from: array, readIndex: readIndex, writeIndex: writeIndex)
+  
+        let data = buf.readAll()
+
+        XCTAssertEqual(data, [1, 1])
+        XCTAssertTrue(buf.isEmpty)
+    }
+
+    func testWrappedWrite() {
+        let array = [0, 1, 0]
+        let readIndex = 1
+        let writeIndex = 2
+        var buf = CircularBuffer<Int>(from: array, readIndex: readIndex, writeIndex: writeIndex)
+  
+        XCTAssertFalse(buf.isEmpty)
+        XCTAssertFalse(buf.isFull)
+
+        buf.write([1, 1])
+
+        XCTAssertFalse(buf.isEmpty)
+        XCTAssertTrue(buf.isFull)
+
+        let data = buf.readAll()
+        XCTAssertEqual(data, [1, 1, 1])
     }
 
     static var allTests = [
         ("testInit", testInit),
         ("testFullAndEmpty", testFullAndEmpty),
         ("testBasicWrite", testBasicWrite),
-        ("testRead", testRead),
-        ("testArrayWrite", testArrayWrite)
+        ("testBasicRead", testBasicRead),
+        ("testArrayWrite", testArrayWrite),
+        ("testReadAll", testReadAll),
+        ("testWrappedRead", testWrappedRead),
+        ("testWrappedWrite", testWrappedWrite)
     ]
 }
