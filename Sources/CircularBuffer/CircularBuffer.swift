@@ -5,8 +5,8 @@
  * does not overwrite data which has not been read yet
  */
 
-public struct CircularBuffer<Numeric> {
-    private(set) var store: [Numeric]
+public struct CircularBuffer<Element> {
+    private(set) var store: [Element]
     private var empty: Bool // only set to true on init and when reading, only set to false when writing
     private(set) var readIndex: Int = 0
     private(set) var writeIndex: Int = 0
@@ -19,13 +19,13 @@ public struct CircularBuffer<Numeric> {
         return (readIndex == writeIndex) && !empty
     }
 
-    public init(repeating value: Numeric, count: Int) {
-        store = Array<Numeric>(repeating: value, count: count)
+    public init(repeating value: Element, count: Int) {
+        store = Array<Element>(repeating: value, count: count)
         empty = true
     }
 
     /// only used for tests to setup use-cases more faster
-    init(from array: [Numeric], readIndex: Int, writeIndex: Int, empty: Bool = false) {
+    init(from array: [Element], readIndex: Int, writeIndex: Int, empty: Bool = false) {
         assert(readIndex < array.count, "readIndex must be smaller than array length")
         assert(writeIndex < array.count, "writeIndex must be smaller than array length")
         self.store = array
@@ -60,7 +60,7 @@ public struct CircularBuffer<Numeric> {
     }
 
     @discardableResult
-    public mutating func write(_ element: Numeric) -> Bool {
+    public mutating func write(_ element: Element) -> Bool {
         if isFull {
             return false
         }
@@ -75,7 +75,7 @@ public struct CircularBuffer<Numeric> {
         return true
     }
 
-    public mutating func read() -> Numeric? {
+    public mutating func read() -> Element? {
         if isEmpty {
             return nil
         }
@@ -96,7 +96,7 @@ public struct CircularBuffer<Numeric> {
 extension CircularBuffer {
 
     /// read all remaining data from the buffer
-    public mutating func readAll() -> [Numeric] {
+    public mutating func readAll() -> [Element] {
         if isEmpty {
             return []
         }
@@ -115,7 +115,7 @@ extension CircularBuffer {
 
     /// write an array to the buffer
     @discardableResult
-    public mutating func write(_ elements: [Numeric]) -> Bool {
+    public mutating func write(_ elements: [Element]) -> Bool {
         guard hasCapacity(for: elements.count) else {
             return false
         }
@@ -134,5 +134,4 @@ extension CircularBuffer {
 
         return true
     }
-
 }
