@@ -39,9 +39,11 @@ final class CircularBufferTests: XCTestCase {
     }
 
     func testBasicRead() {
-        var buf = CircularBuffer<Float>(repeating: 0, count: 10)
-        let testData: [Float] = [0.1, 0.2, 0.3, 0.4]
-        testData.forEach { buf.write($0) }
+        var buf = CircularBuffer<Float>(
+            from: [0.1, 0.2, 0.3, 0.4],
+            readIndex: 0,
+            writeIndex: 3
+        )
 
         if let value = buf.read() {
             XCTAssertEqual(0.1, value)
@@ -57,6 +59,8 @@ final class CircularBufferTests: XCTestCase {
 
         XCTAssertTrue(buf.isFull)
         XCTAssertFalse(buf.isEmpty)
+        XCTAssertEqual(buf.readIndex, 0)
+        XCTAssertEqual(buf.writeIndex, 0)
     }
 
     func testReadAll() {
@@ -101,6 +105,30 @@ final class CircularBufferTests: XCTestCase {
         XCTAssertEqual(data, [1, 1, 1])
     }
 
+    func testUseCase1() {
+        let bufferSize = 8
+        var buf = CircularBuffer<Float>(repeating: 0, count: bufferSize)
+        let testData: [Float] = [0.1, 0.2, 0.3, 0.4]
+
+        // write to fill buffer
+        XCTAssertTrue(buf.write(testData))
+        XCTAssertTrue(buf.write(testData))
+        XCTAssertEqual(buf.store.count, bufferSize)
+
+        // should not be able to write now
+        XCTAssertFalse(buf.write(testData))
+
+        // read all data
+        let data = buf.readAll()
+        XCTAssertEqual(data.count, bufferSize)
+        XCTAssertEqual(data,  testData + testData)
+
+        // should be able to write again
+        XCTAssertTrue(buf.write(testData))
+
+        XCTAssertEqual(buf.store.count, bufferSize)
+    }
+
     static var allTests = [
         ("testInit", testInit),
         ("testFullAndEmpty", testFullAndEmpty),
@@ -109,6 +137,7 @@ final class CircularBufferTests: XCTestCase {
         ("testArrayWrite", testArrayWrite),
         ("testReadAll", testReadAll),
         ("testWrappedRead", testWrappedRead),
-        ("testWrappedWrite", testWrappedWrite)
+        ("testWrappedWrite", testWrappedWrite),
+        ("testUseCase1", testUseCase1)
     ]
 }

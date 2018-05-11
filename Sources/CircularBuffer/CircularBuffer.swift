@@ -125,11 +125,17 @@ extension CircularBuffer {
             empty = false
         }
 
-        if writeIndex < readIndex {
-            store[writeIndex ..< readIndex] = ArraySlice(elements)
+        let mustWrap = (store.count - writeIndex) < elements.count
+        if !mustWrap {
+            store[writeIndex ..< writeIndex + elements.count] = ArraySlice(elements)
         } else {
-            store[writeIndex...] = ArraySlice(elements.prefix(store.count - writeIndex))
-            store[..<readIndex] = ArraySlice(elements.suffix(readIndex))
+            let maxNumberOfElementsToWriteAtEnd = store.count - writeIndex
+            let elementsToWriteAtEnd = elements.prefix(maxNumberOfElementsToWriteAtEnd)
+            store[writeIndex...] = elementsToWriteAtEnd
+
+            let maxNumberOfElementsToWriteAtBeginning = elements.count - elementsToWriteAtEnd.count
+            let elementsToWriteAtBeginning = elements.suffix(maxNumberOfElementsToWriteAtBeginning)
+            store[..<maxNumberOfElementsToWriteAtBeginning] = elementsToWriteAtBeginning
         }
 
         return true
