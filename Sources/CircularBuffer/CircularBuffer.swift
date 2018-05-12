@@ -1,10 +1,3 @@
-/*
- * fixed size circular buffer
- * not thread-safe
- * uses an 'empty' flag with additional logic to check if buffer is full or empty
- * does not overwrite data which has not been read yet
- */
-
 public struct CircularBuffer<Element> {
     private(set) var store: [Element]
     private var empty: Bool // only set to true on init and when reading, only set to false when writing
